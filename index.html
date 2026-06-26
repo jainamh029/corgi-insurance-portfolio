@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Jainam Shah · Corgi Portfolio Park</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#3A7A38;font-family:'Space Grotesk',sans-serif;touch-action:none}
+canvas{display:block;position:absolute;top:0;left:0}
+
+/* HUD */
+#hud{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:10px 18px;background:rgba(10,20,10,0.45);backdrop-filter:blur(10px)}
+#hud-l{display:flex;align-items:center;gap:10px}
+#hud-av{width:38px;height:38px;border-radius:50%;object-fit:cover;object-position:top center;border:2px solid rgba(255,255,255,0.45)}
+#hud-name{color:#fff;font-weight:700;font-size:15px}
+#hud-role{color:rgba(255,255,255,0.55);font-family:'JetBrains Mono',monospace;font-size:10px;margin-top:1px}
+#hud-r{display:flex;gap:8px}
+.hl{padding:5px 13px;border:1px solid rgba(255,255,255,0.28);border-radius:30px;color:rgba(255,255,255,0.8);font-size:11px;font-family:'JetBrains Mono',monospace;text-decoration:none;transition:all .2s}
+.hl:hover{background:rgba(255,255,255,0.15);color:#fff;border-color:rgba(255,255,255,0.5)}
+
+/* Controls hint */
+#hint-bar{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:50;padding:6px 18px;background:rgba(0,0,0,0.5);border-radius:20px;color:rgba(255,255,255,0.65);font-family:'JetBrains Mono',monospace;font-size:11px;pointer-events:none;white-space:nowrap;letter-spacing:.03em}
+
+/* Mobile d-pad */
+#dpad{position:fixed;bottom:16px;left:16px;z-index:50;display:none}
+.dp-row{display:flex;justify-content:center;gap:4px;margin:2px 0}
+.dp-btn{width:52px;height:52px;background:rgba(255,255,255,0.18);border:2px solid rgba(255,255,255,0.35);border-radius:10px;color:#fff;font-size:22px;cursor:pointer;user-select:none;-webkit-user-select:none;display:flex;align-items:center;justify-content:center;touch-action:none}
+.dp-btn:active,.dp-btn.held{background:rgba(255,255,255,0.35)}
+
+/* Modal */
+#modal{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;padding:16px}
+#mbg{position:absolute;inset:0;background:rgba(0,0,0,0);transition:background .3s ease}
+#modal.open #mbg{background:rgba(0,0,0,0.7)}
+#mcard{position:relative;background:#0D1B2A;border:1px solid rgba(255,255,255,0.09);border-radius:20px;padding:30px 28px 28px;max-width:500px;width:100%;transform:scale(0.88) translateY(16px);opacity:0;transition:transform .32s cubic-bezier(.34,1.56,.64,1),opacity .28s ease;max-height:88vh;overflow-y:auto;scrollbar-width:thin}
+#modal.open #mcard{transform:scale(1) translateY(0);opacity:1}
+#mcl{position:absolute;top:14px;right:14px;width:30px;height:30px;background:rgba(255,255,255,0.07);border:none;border-radius:50%;color:#fff;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s}
+#mcl:hover{background:rgba(255,255,255,0.16)}
+.mc-bar{position:absolute;top:0;left:0;right:0;height:4px;border-radius:20px 20px 0 0}
+.mc-icon{font-size:2.2rem;line-height:1;margin-bottom:8px}
+.mc-cat{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px}
+.mc-title{font-size:21px;font-weight:700;color:#fff;letter-spacing:-.01em;margin-bottom:16px;line-height:1.2}
+.mc-metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.mc-metric{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:11px 13px}
+.mc-mval{font-family:'JetBrains Mono',monospace;font-size:1.1rem;font-weight:500}
+.mc-mlbl{font-size:10px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+.mc-desc{font-size:13.5px;color:rgba(255,255,255,0.65);line-height:1.7;margin-bottom:16px}
+.mc-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:20px}
+.mc-tag{padding:3px 9px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,0.55)}
+.mc-link{display:inline-flex;align-items:center;gap:8px;padding:11px 22px;border-radius:9px;font-weight:700;font-size:13.5px;text-decoration:none;transition:all .2s}
+.mc-link:hover{transform:translateY(-2px)}
+
+/* CV-specific modal styles */
+.cv-sec{margin-bottom:16px}
+.cv-sec-hd{font-family:'JetBrains Mono',monospace;font-size:10px;color:#E8893A;letter-spacing:.12em;text-transform:uppercase;margin-bottom:9px;padding-bottom:5px;border-bottom:1px solid rgba(255,255,255,0.08)}
+.cv-exp{margin-bottom:12px}
+.cv-exp-role{font-size:13px;font-weight:700;color:#fff;line-height:1.3}
+.cv-exp-co{font-size:10.5px;color:rgba(255,255,255,0.4);font-style:italic;margin:2px 0 6px;font-family:'JetBrains Mono',monospace}
+.cv-pts{list-style:none;padding:0;display:flex;flex-direction:column;gap:4px}
+.cv-pts li{font-size:12px;color:rgba(255,255,255,0.58);line-height:1.6;padding-left:14px;position:relative}
+.cv-pts li::before{content:'▸';position:absolute;left:0;color:#E8893A;font-size:9px;top:3px}
+.cv-pts b{color:rgba(255,255,255,0.82)}
+.cv-edu-row{display:flex;flex-direction:column;gap:2px;margin-bottom:9px}
+.cv-edu-deg{font-size:13px;font-weight:600;color:#fff}
+.cv-edu-co{font-size:10.5px;color:rgba(255,255,255,0.42);font-family:'JetBrains Mono',monospace}
+
+/* Treat collected toast */
+#toast{position:fixed;top:70px;left:50%;transform:translateX(-50%) translateY(-10px);z-index:300;padding:8px 18px;background:rgba(255,200,50,0.95);color:#1A0800;border-radius:20px;font-weight:700;font-size:13px;pointer-events:none;opacity:0;transition:opacity .25s,transform .25s}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<!-- HUD -->
+<div id="hud">
+  <div id="hud-l">
+    <img id="hud-av" src="photos/IMG_7831.jpeg" alt="Jainam">
+    <div>
+      <div id="hud-name">Jainam Shah</div>
+      <div id="hud-role">Strategic Finance · MS Quant Finance</div>
+    </div>
+  </div>
+  <div id="hud-r">
+    <a class="hl" href="https://linkedin.com/in/s-jainam" target="_blank">LinkedIn</a>
+    <a class="hl" href="https://github.com/jainamh029" target="_blank">GitHub</a>
+    <a class="hl" href="mailto:shah.jainamh@northeastern.edu">Email</a>
+  </div>
+</div>
+
+<!-- Controls hint -->
+<div id="hint-bar">Arrow Keys / WASD · Move &nbsp;·&nbsp; E or Enter · Open Project &nbsp;·&nbsp; ESC · Close</div>
+
+<!-- Mobile D-pad -->
+<div id="dpad">
+  <div class="dp-row"><button class="dp-btn" id="dp-u">▲</button></div>
+  <div class="dp-row">
+    <button class="dp-btn" id="dp-l">◄</button>
+    <button class="dp-btn" id="dp-e">✦</button>
+    <button class="dp-btn" id="dp-r">►</button>
+  </div>
+  <div class="dp-row"><button class="dp-btn" id="dp-d">▼</button></div>
+</div>
+
+<!-- Treat collected toast -->
+<div id="toast">🦴 Resume found!</div>
+
+<!-- Project Modal -->
+<div id="modal">
+  <div id="mbg"></div>
+  <div id="mcard">
+    <button id="mcl">✕</button>
+    <div id="mbody"></div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+//  CANVAS
+// ─────────────────────────────────────────────
+const cv = document.getElementById('c');
+const cx = cv.getContext('2d');
+let W = cv.width = window.innerWidth;
+let H = cv.height = window.innerHeight;
+window.addEventListener('resize', () => {
+  W = cv.width = window.innerWidth;
+  H = cv.height = window.innerHeight;
+});
+
+// ─────────────────────────────────────────────
+//  WORLD
+// ─────────────────────────────────────────────
+const WW = 1440, WH = 920; // world size
+
+// ─────────────────────────────────────────────
+//  PROJECTS
+// ─────────────────────────────────────────────
+const PROJECTS = [
+  { icon:'🏥', color:'#E74C3C', cat:'Insurance · Healthcare M&A',
+    name:'HealthRisk IQ',
+    metrics:[['M&A','Deal Dashboard'],['MA','Medicare Advantage']],
+    desc:'Healthcare M&A analytics dashboard evaluating deal activity, strategic fit, and financial performance across Medicare Advantage — directly relevant to insurance market dynamics and underwriting economics.',
+    tags:['Healthcare Finance','M&A Analysis','Insurance','Dashboard'],
+    link:'https://github.com/jainamh029/Healthrisk-iq' },
+  { icon:'📊', color:'#2196F3', cat:'FP&A · Risk Analytics · ML Forecasting',
+    name:'S&P 500 Risk & Performance Engine',
+    metrics:[['468+','Securities'],['63-day','ML Forecast']],
+    desc:'Institutional-grade risk analytics system — multi-method VaR/Expected Shortfall engine, ensemble ML forecasting (Random Forest + Gradient Boosting), and mean-variance portfolio optimization across all 11 GICS sectors.',
+    tags:['Python','scikit-learn','VaR / ES','ML Forecasting','Portfolio Opt.'],
+    link:'https://github.com/jainamh029/risk_management' },
+  { icon:'💼', color:'#9C27B0', cat:'LBO Modeling · Investment Analysis',
+    name:'PE Deal Suite',
+    metrics:[['IRR','Return Engine'],['Live','Market Data']],
+    desc:'Python private equity toolkit for SaaS buyouts — LBO model with pro forma projections, debt amortization, IRR/MOIC sensitivity tables, and a weighted multi-factor deal screener with live market data via yfinance.',
+    tags:['Python','LBO Model','Dash / Plotly','Sensitivity Tables','yfinance'],
+    link:'https://github.com/jainamh029/pe-deal-suite' },
+  { icon:'📈', color:'#FF9800', cat:'Backtesting · Stress Testing · Index Construction',
+    name:'MVPX Sports Economy Index',
+    metrics:[['192%','Total Return'],['+27pp','COVID Outperf.']],
+    desc:'Conviction-weighted thematic index tracking 18 U.S.-listed sports economy companies. Backtested 2019–present with three stress scenarios (2008 crisis, COVID crash, 2022 rate cycle). Superior crisis resilience vs. S&P 500.',
+    tags:['Python','Backtesting','Stress Testing','Chart.js','Live Dashboard'],
+    link:'https://jainamh029.github.io/MVPX/' },
+];
+
+// ─────────────────────────────────────────────
+//  HOUSES  (top-down layout, door faces south)
+// ─────────────────────────────────────────────
+const HOUSES = [
+  { x:260,  y:210, proj:0, roof:'#8B1F1F', wall:'#F5EFE6', door:'#5C0A0A', acc:'#CC2200', label:'London Office' },
+  { x:1180, y:210, proj:1, roof:'#1A3A5C', wall:'#D4E6F1', door:'#2C5F8A', acc:'#2196F3', label:'San Francisco' },
+  { x:260,  y:740, proj:2, roof:'#4A235A', wall:'#FEF9E7', door:'#6C3483', acc:'#9C27B0', label:'Chicago Office' },
+  { x:1180, y:740, proj:3, roof:'#5D3A1A', wall:'#FFF8F0', door:'#3D2008', acc:'#E67E22', label:'Corgi Cafe' },
+];
+
+// Door trigger = house front, just below the house
+HOUSES.forEach(h => { h.doorX = h.x; h.doorY = h.y + 60; });
+
+// ─────────────────────────────────────────────
+//  PATHS (rects)
+// ─────────────────────────────────────────────
+const PW = 60; // path width
+const PATHS = [
+  // main horizontal
+  {x:0,    y:430, w:WW,  h:PW},
+  // main vertical
+  {x:690,  y:0,   w:PW,  h:WH},
+  // NW branch to H1 (London)
+  {x:230,  y:210, w:PW,  h:280},
+  // NE branch to H2 (SF)
+  {x:1150, y:210, w:PW,  h:280},
+  // SW branch to H3 (Chicago)
+  {x:230,  y:460, w:PW,  h:340},
+  // SE branch to H4 (Cafe)
+  {x:1150, y:460, w:PW,  h:340},
+  // H3 horizontal connector
+  {x:230,  y:710, w:460, h:PW},
+  // H4 horizontal connector
+  {x:750,  y:710, w:400, h:PW},
+];
+
+// ─────────────────────────────────────────────
+//  TREES  (seeded, avoid paths/houses)
+// ─────────────────────────────────────────────
+function onPath(tx,ty,margin=60){
+  return PATHS.some(p=>tx>p.x-margin&&tx<p.x+p.w+margin&&ty>p.y-margin&&ty<p.y+p.h+margin);
+}
+function nearHouseCheck(tx,ty,margin=160){
+  return HOUSES.some(h=>Math.hypot(tx-h.x,ty-h.y)<margin);
+}
+const TREES=[];
+for(let i=0;i<120;i++){
+  const tx=20+(Math.abs(Math.sin(i*7.31+1.2))*(WW-40))|0;
+  const ty=20+(Math.abs(Math.sin(i*4.17+2.7))*(WH-40))|0;
+  const sz=0.7+Math.abs(Math.sin(i*5.9))*0.65;
+  if(!onPath(tx,ty)&&!nearHouseCheck(tx,ty))
+    TREES.push({x:tx,y:ty,s:sz});
+}
+
+// ─────────────────────────────────────────────
+//  FLOWERS
+// ─────────────────────────────────────────────
+const FCOLORS=['#FF6B9D','#FFD93D','#6BCB77','#4D96FF','#FF8C42','#C77DFF'];
+const FLOWERS=[];
+for(let i=0;i<200;i++){
+  const fx=10+(Math.abs(Math.sin(i*9.1+0.5))*(WW-20))|0;
+  const fy=10+(Math.abs(Math.sin(i*5.3+3.1))*(WH-20))|0;
+  if(!nearHouseCheck(fx,fy,120))
+    FLOWERS.push({x:fx,y:fy,c:FCOLORS[i%FCOLORS.length]});
+}
+
+// ─────────────────────────────────────────────
+//  BENCHES / LAMPS
+// ─────────────────────────────────────────────
+const BENCHES=[
+  {x:490,y:460},{x:880,y:460},{x:260,y:460},{x:1180,y:460},
+  {x:260,y:740},{x:1180,y:740},{x:720,y:270},{x:720,y:650},
+];
+const LAMPS=[
+  {x:400,y:440},{x:750,y:440},{x:1040,y:440},
+  {x:250,y:330},{x:1170,y:330},{x:250,y:570},{x:1170,y:570},
+  {x:720,y:160},{x:720,y:380},
+];
+
+// ─────────────────────────────────────────────
+//  TREATS  — each bone shows something different
+// ─────────────────────────────────────────────
+const TREATS = [
+  {x:460,  y:460, collected:false, card:0, label:'About Me'},
+  {x:950,  y:460, collected:false, card:1, label:'Full Résumé'},
+  {x:720,  y:280, collected:false, card:2, label:'Education'},
+  {x:720,  y:620, collected:false, card:3, label:'Skills'},
+  {x:260,  y:340, collected:false, card:4, label:'TechMentee'},
+  {x:1180, y:340, collected:false, card:5, label:'BSE Internship'},
+  {x:260,  y:580, collected:false, card:6, label:'Shanti Enterprise'},
+  {x:1180, y:580, collected:false, card:7, label:'Certifications'},
+];
+
+// ─────────────────────────────────────────────
+//  NPC DOGS
+// ─────────────────────────────────────────────
+const NPC_DOGS = [
+  {x:350,y:290, angle:0.4,      targetAngle:0.4,      vx:0.7,  vy:0.4,  wanderTimer:60,  legPhase:0,   bodyCol:'#F0E8D0', legCol:'#D4C0A0'},
+  {x:1100,y:280,angle:Math.PI,  targetAngle:Math.PI,  vx:-0.8, vy:0.3,  wanderTimer:45,  legPhase:1.2, bodyCol:'#7A4520', legCol:'#522E10'},
+  {x:370,y:640, angle:1.2,      targetAngle:1.2,      vx:0.4,  vy:0.9,  wanderTimer:80,  legPhase:2.4, bodyCol:'#D4A030', legCol:'#9A7018'},
+  {x:1080,y:640,angle:-0.8,     targetAngle:-0.8,     vx:-0.5, vy:-0.7, wanderTimer:70,  legPhase:0.6, bodyCol:'#E8CFA0', legCol:'#C0A060'},
+];
+
+function updateNPCDogs(dt){
+  NPC_DOGS.forEach(n=>{
+    n.wanderTimer-=dt;
+    if(n.wanderTimer<=0){
+      const a=Math.random()*Math.PI*2;
+      const spd=0.5+Math.random()*1.3;
+      n.vx=Math.cos(a)*spd; n.vy=Math.sin(a)*spd;
+      n.targetAngle=a;
+      n.wanderTimer=80+Math.random()*170;
+    }
+    n.x=Math.max(35,Math.min(WW-35,n.x+n.vx));
+    n.y=Math.max(35,Math.min(WH-35,n.y+n.vy));
+    if(n.x<=35||n.x>=WW-35){n.vx*=-1; n.targetAngle=Math.atan2(n.vy,n.vx);}
+    if(n.y<=35||n.y>=WH-35){n.vy*=-1; n.targetAngle=Math.atan2(n.vy,n.vx);}
+    n.angle=lerpAngle(n.angle,n.targetAngle,0.07);
+    n.legPhase+=(Math.abs(n.vx)+Math.abs(n.vy))*dt*0.008;
+  });
+}
+
+function drawNPCDog(n){
+  cx.save();
+  cx.translate(n.x,n.y);
+  cx.rotate(n.angle);
+  const lp=n.legPhase;
+  // back legs
+  cx.fillStyle=n.legCol;
+  fe(-13,-8+Math.sin(lp)*4,5,3.5,0.3);
+  fe(-13, 8-Math.sin(lp)*4,5,3.5,-0.3);
+  // body
+  cx.fillStyle=n.bodyCol; fe(0,0,18,11);
+  // head
+  cx.fillStyle=n.bodyCol; fe(19,0,10,8);
+  // ears
+  cx.fillStyle=n.legCol;
+  fe(16,-7,4.5,6.5,-0.3);
+  fe(16, 7,4.5,6.5, 0.3);
+  // front legs
+  cx.fillStyle=n.legCol;
+  fe(9,-8+Math.sin(lp+Math.PI)*4,5,3.5,0.3);
+  fe(9, 8-Math.sin(lp+Math.PI)*4,5,3.5,-0.3);
+  // eyes
+  cx.fillStyle='#2C1A10'; fc(22,-2.5,2);
+  // nose
+  cx.fillStyle='#2C1A10'; fc(27,0,2);
+  // tail wag
+  const tw=Date.now()*0.004+n.x*0.01;
+  cx.save(); cx.translate(-18,0); cx.rotate(Math.sin(tw)*0.45-0.3);
+  cx.fillStyle=n.legCol; fe(-7,0,7,3.5,0);
+  cx.restore();
+  cx.restore();
+}
+
+// ─────────────────────────────────────────────
+//  PARTICLES  (collect burst)
+// ─────────────────────────────────────────────
+const PARTS = [];
+function spawnParts(x,y){
+  for(let i=0;i<12;i++){
+    const a=(i/12)*Math.PI*2+Math.random()*0.4;
+    PARTS.push({
+      x,y,
+      vx:Math.cos(a)*(1.8+Math.random()*2.4),
+      vy:Math.sin(a)*(1.8+Math.random()*2.4),
+      life:1,
+      size:3+Math.random()*3.5,
+      col:['#FFD700','#FF9800','#FFE87C','#FFF0A0','#E8893A'][i%5],
+    });
+  }
+}
+function updateParts(dt){
+  for(let i=PARTS.length-1;i>=0;i--){
+    const p=PARTS[i];
+    p.x+=p.vx; p.y+=p.vy; p.vy+=0.1;
+    p.life-=dt*0.0028;
+    if(p.life<=0) PARTS.splice(i,1);
+  }
+}
+function drawParts(){
+  PARTS.forEach(p=>{
+    cx.globalAlpha=Math.max(0,p.life*p.life);
+    cx.fillStyle=p.col;
+    fc(p.x,p.y,p.size*p.life);
+  });
+  cx.globalAlpha=1;
+}
+
+// ─────────────────────────────────────────────
+//  CORGI STATE
+// ─────────────────────────────────────────────
+const dog = {
+  x: 720,  y: 860,         // start at entry gate
+  angle: -Math.PI/2,       // facing up initially
+  targetAngle: -Math.PI/2,
+  walking: false,
+  legPhase: 0,
+  wagT: 0,
+  near: null,              // index of nearby house, or null
+  speed: 3.2,
+};
+
+// ─────────────────────────────────────────────
+//  CAMERA
+// ─────────────────────────────────────────────
+let camX = dog.x - W/2;
+let camY = dog.y - H/2;
+
+// ─────────────────────────────────────────────
+//  INPUT
+// ─────────────────────────────────────────────
+const K = {};            // held keys
+const JP = {};           // just-pressed (consumed each frame)
+
+document.addEventListener('keydown', e => {
+  if(!K[e.code]) JP[e.code] = true;
+  K[e.code] = true;
+  if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Space','Enter'].includes(e.code))
+    e.preventDefault();
+  if(e.code==='Escape') closeModal();
+});
+document.addEventListener('keyup', e => { K[e.code]=false; });
+
+// Mobile d-pad
+const mobileState = {u:false,d:false,l:false,r:false,e:false};
+function attachBtn(id, prop, oneShot){
+  const el=document.getElementById(id);
+  const on=()=>{ if(oneShot){mobileState[prop]=true;}else mobileState[prop]=true; };
+  const off=()=>{ mobileState[prop]=false; };
+  el.addEventListener('touchstart',e=>{e.preventDefault();on();},{passive:false});
+  el.addEventListener('touchend',e=>{e.preventDefault();off();},{passive:false});
+  el.addEventListener('mousedown',e=>{e.preventDefault();on();});
+  el.addEventListener('mouseup',e=>{e.preventDefault();off();});
+}
+attachBtn('dp-u','u');
+attachBtn('dp-d','d');
+attachBtn('dp-l','l');
+attachBtn('dp-r','r');
+attachBtn('dp-e','e');
+
+// Show d-pad on touch
+if('ontouchstart' in window){
+  document.getElementById('dpad').style.display='block';
+  document.getElementById('hint-bar').style.display='none';
+}
+
+// ─────────────────────────────────────────────
+//  MODAL
+// ─────────────────────────────────────────────
+let modalOpen = false;
+const visited = [false,false,false,false];
+
+function openModal(projIdx){
+  const p = PROJECTS[projIdx];
+  visited[projIdx]=true;
+  document.getElementById('mbody').innerHTML=`
+    <div class="mc-bar" style="background:${p.color}"></div>
+    <div class="mc-icon">${p.icon}</div>
+    <div class="mc-cat" style="color:${p.color}">${p.cat}</div>
+    <h2 class="mc-title">${p.name}</h2>
+    <div class="mc-metrics">
+      ${p.metrics.map(([v,l])=>`<div class="mc-metric">
+        <div class="mc-mval" style="color:${p.color}">${v}</div>
+        <div class="mc-mlbl">${l}</div>
+      </div>`).join('')}
+    </div>
+    <p class="mc-desc">${p.desc}</p>
+    <div class="mc-tags">${p.tags.map(t=>`<span class="mc-tag">${t}</span>`).join('')}</div>
+    <a class="mc-link" href="${p.link}" target="_blank"
+       style="background:${p.color};color:${p.color==='#E74C3C'||p.color==='#9C27B0'?'#fff':'#0D1B2A'}">
+      View on GitHub →
+    </a>`;
+  const m=document.getElementById('modal');
+  m.style.display='flex';
+  requestAnimationFrame(()=>{ m.classList.add('open'); modalOpen=true; });
+}
+
+function closeModal(){
+  document.getElementById('modal').classList.remove('open');
+  setTimeout(()=>{ document.getElementById('modal').style.display='none'; modalOpen=false; },340);
+}
+
+document.getElementById('mcl').addEventListener('click',closeModal);
+document.getElementById('mbg').addEventListener('click',closeModal);
+
+const AC='#E8893A'; // accent orange
+function m(v,l){return `<div class="mc-metric"><div class="mc-mval" style="color:${AC}">${v}</div><div class="mc-mlbl">${l}</div></div>`;}
+function bar(col){return `<div class="mc-bar" style="background:${col}"></div>`;}
+function tag(t){return `<span class="mc-tag">${t}</span>`;}
+function expBlock(role,co,pts){
+  return `<div class="cv-exp"><div class="cv-exp-role">${role}</div><div class="cv-exp-co">${co}</div>
+  <ul class="cv-pts">${pts.map(p=>`<li>${p}</li>`).join('')}</ul></div>`;
+}
+
+function getTreatHTML(idx){
+  switch(idx){
+
+  case 0: return `${bar(AC)}
+    <div class="mc-icon">🐕</div>
+    <div class="mc-cat" style="color:${AC}">Personal Profile</div>
+    <h2 class="mc-title">Meet Jainam</h2>
+    <div class="mc-metrics">${m('NY','Based In')}${m('3+','Yrs Exp.')}${m('MS','Quant Finance')}${m('3','Companies')}</div>
+    <p class="mc-desc">Strategic finance professional who <b style="color:#fff">builds over maintains</b> — turning complex financial data into decisions that leadership can act on. My edge is the combination: I can build the model <em>and</em> write the Python pipeline that feeds it.<br><br>Open to Strategic Finance &amp; FP&amp;A opportunities.</p>
+    <div class="mc-tags">${['New York, NY','High Ownership','Builds Over Maintains','Low-Ego Collaborative','Cross-Functional','Clear Communicator'].map(tag).join('')}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <a class="mc-link" href="https://linkedin.com/in/s-jainam" target="_blank" style="background:#0A66C2;color:#fff">LinkedIn →</a>
+      <a class="mc-link" href="mailto:shah.jainamh@northeastern.edu" style="background:${AC};color:#0D1B2A">Email →</a>
+    </div>`;
+
+  case 1: return `${bar(`linear-gradient(90deg,${AC},#FFD700)`)}
+    <div class="mc-icon">📄</div>
+    <div class="mc-cat" style="color:${AC}">Full Résumé · Strategic Finance</div>
+    <h2 class="mc-title">Jainam Hitesh Shah</h2>
+    <div class="mc-metrics">${m('MS','Quant Finance · NEU')}${m('3+','Years Exp.')}${m('3','Companies')}${m('NY','Based In')}</div>
+    <div class="cv-sec">
+      <div class="cv-sec-hd">Quick Summary</div>
+      <p class="mc-desc" style="margin:0">FP&amp;A · Financial Modeling · Python &amp; SQL Automation · LBO / DCF · Bloomberg · Scenario Analysis · Variance Reporting · Investor Reporting. Comfortable with ambiguity, fast learner, low ego.</p>
+    </div>
+    <div class="mc-tags">${['FP&A','Financial Modeling','Python','SQL','LBO / DCF','Bloomberg Terminal','VaR / ES','Excel VBA','Tableau','Scenario Analysis','Insurance Underwriting'].map(tag).join('')}</div>
+    <a class="mc-link" href="cv/Jainam_Shah_Corgi_Strategic_Finance_Associate.docx" download style="background:${AC};color:#0D1B2A">Download Résumé ↓</a>`;
+
+  case 2: return `${bar('#6C63FF')}
+    <div class="mc-icon">🎓</div>
+    <div class="mc-cat" style="color:#9C8FFF">Academic Background</div>
+    <h2 class="mc-title">Education</h2>
+    <div class="mc-metrics">${m('2025','MS Graduation')}${m('2023','BMS Graduation')}${m('Quant','Specialization')}${m('Finance','Major')}</div>
+    <div class="cv-sec">
+      <div class="cv-sec-hd">Degrees</div>
+      <div class="cv-exp">
+        <div class="cv-exp-role">MS, Quantitative Finance</div>
+        <div class="cv-exp-co">Northeastern University · D'Amore-McKim School of Business · Boston, MA · May 2025</div>
+        <ul class="cv-pts"><li>Coursework: Financial Econometrics, Derivatives Pricing, Portfolio Theory, Fixed Income, Risk Management, Financial Modelling</li></ul>
+      </div>
+      <div class="cv-exp">
+        <div class="cv-exp-role">Bachelor of Management Studies, Finance</div>
+        <div class="cv-exp-co">University of Mumbai · Mumbai, India · May 2023</div>
+        <ul class="cv-pts"><li>Core Finance, Accounting, Economics, Business Statistics, Corporate Strategy</li></ul>
+      </div>
+    </div>`;
+
+  case 3: return `${bar('#00BCD4')}
+    <div class="mc-icon">⚡</div>
+    <div class="mc-cat" style="color:#4DD0E1">Technical Skill Stack</div>
+    <h2 class="mc-title">Skills</h2>
+    <div class="cv-sec"><div class="cv-sec-hd">Strategic Finance &amp; FP&amp;A</div>
+    <div class="mc-tags">${['Financial Modeling','Forecasting & LRP','Budgeting','Variance Analysis','Actuals vs. Forecast','Scenario Analysis','Unit Economics','Investor Reporting','Process Improvement'].map(tag).join('')}</div></div>
+    <div class="cv-sec"><div class="cv-sec-hd">Analytics &amp; Data</div>
+    <div class="mc-tags">${['Python (Pandas, NumPy, scikit-learn)','SQL (Postgres)','Tableau','Power BI','Data Pipeline Automation','ML for Finance','Statistical Analysis'].map(tag).join('')}</div></div>
+    <div class="cv-sec"><div class="cv-sec-hd">Modeling &amp; Tools</div>
+    <div class="mc-tags">${['3-Statement Model','DCF','LBO','Comps Analysis','VaR / Expected Shortfall','Portfolio Optimization','Advanced Excel + VBA','Bloomberg Terminal','FactSet','R'].map(tag).join('')}</div></div>`;
+
+  case 4: return `${bar('#2196F3')}
+    <div class="mc-icon">💼</div>
+    <div class="mc-cat" style="color:#64B5F6">Most Recent Role · Sep 2025 – May 2026</div>
+    <h2 class="mc-title">Investment Banking Analyst</h2>
+    <div class="mc-metrics">${m('15+','Accounts')}${m('40%','Time Saved')}${m('LRP','Planning')}${m('SQL','Dashboards')}</div>
+    <div class="cv-sec"><div class="cv-sec-hd">TechMentee Inc. (Contract) · Boston, MA</div>
+    ${expBlock('','',
+      ['Built and maintained financial models, forecasts, and long-range planning tools across <b>15+ accounts</b> — delivered actuals vs. forecast variance commentary and monthly Business Review packages; supported the Annual Operating Plan by consolidating inputs and preparing leadership-ready reporting',
+       'Evaluated strategic initiatives and investment opportunities through scenario-based financial models stress-testing revenue assumptions, margin profiles, and capital allocation trade-offs; synthesized complex analysis into concise executive reporting that accelerated decisions on growth investments and operational priorities',
+       'Identified reporting inefficiencies and built Python &amp; Excel VBA automation tools reducing manual processing time by <b>40%</b>; designed scalable reporting frameworks that improved data visibility and financial insight across the organization',
+       'Built SQL-driven dashboards and Python data pipelines consolidating financial and operational data into management summaries; worked cross-functionally with accounting, operations, and leadership to ensure financial data was accurate, timely, and actionable — supported investor reporting and translated ambiguous datasets into structured insights'])}
+    </div>`;
+
+  case 5: return `${bar('#43A047')}
+    <div class="mc-icon">📊</div>
+    <div class="mc-cat" style="color:#81C784">Internship · May 2022 – Jul 2022</div>
+    <h2 class="mc-title">Quantitative Research &amp; Strategic Finance Intern</h2>
+    <div class="mc-metrics">${m('30+','Companies')}${m('$100K+','Portfolio')}${m('60%','Time Saved')}${m('BSE','Exchange')}</div>
+    <div class="cv-sec"><div class="cv-sec-hd">Bombay Stock Exchange · Mumbai, India</div>
+    ${expBlock('','',
+      ['Analyzed <b>30+ companies</b> across a $100K+ monitored portfolio — built models tracking revenue growth, EBITDA margins, ROIC, and valuation multiples to support senior analyst decisions',
+       'Conducted fundamental analysis and built scenario models stress-testing return assumptions; synthesized into concise one-pagers leadership could act on immediately',
+       'Built Python-automated data pipelines replacing manual spreadsheet workflows, reducing analysis time by <b>60%</b>'])}
+    </div>`;
+
+  case 6: return `${bar('#8D6E63')}
+    <div class="mc-icon">🏢</div>
+    <div class="mc-cat" style="color:#BCAAA4">Financial Analyst · Feb 2021 – Mar 2022</div>
+    <h2 class="mc-title">Financial Analyst</h2>
+    <div class="mc-metrics">${m('20+','Engagements')}${m('40%','Effort Saved')}${m('VBA','Automation')}${m('3-Stmt','Models')}</div>
+    <div class="cv-sec"><div class="cv-sec-hd">Shanti Enterprise · Mumbai, India</div>
+    ${expBlock('','',
+      ['Built and maintained financial models &amp; forecasts across <b>20+ client engagements</b>; tracked actuals vs. plan and prepared variance analysis with commentary for senior leadership',
+       'Conducted sensitivity and scenario analysis across base, upside, and downside cases; translated complex quantitative findings into actionable capital allocation insights',
+       'Implemented Excel VBA automation solutions reducing manual effort by <b>40%</b>; built reporting tools improving data visibility across the organization'])}
+    </div>`;
+
+  case 7: return `${bar('#F9A825')}
+    <div class="mc-icon">🏅</div>
+    <div class="mc-cat" style="color:#FFD54F">Credentials &amp; Certifications</div>
+    <h2 class="mc-title">Certifications</h2>
+    <div class="cv-sec"><div class="cv-sec-hd">Completed</div>
+      <div class="cv-exp"><div class="cv-exp-role">Investment Banking Job Simulation</div><div class="cv-exp-co">Bank of America · Forage</div></div>
+      <div class="cv-exp"><div class="cv-exp-role">Excel for Financial Analysis</div><div class="cv-exp-co">LinkedIn Learning</div></div>
+      <div class="cv-exp"><div class="cv-exp-role">Data Manipulation with Pandas</div><div class="cv-exp-co">DataCamp</div></div>
+      <div class="cv-exp"><div class="cv-exp-role">MS, Quantitative Finance</div><div class="cv-exp-co">Northeastern University · May 2025</div></div>
+    </div>
+    <div class="mc-tags">${['Financial Modeling','Python','Excel VBA','Pandas','Investment Banking','Strategic Finance'].map(tag).join('')}</div>`;
+
+  default: return '';
+  }
+}
+
+function showTreatCard(idx){
+  document.getElementById('mbody').innerHTML = getTreatHTML(idx);
+  const modal=document.getElementById('modal');
+  modal.style.display='flex';
+  requestAnimationFrame(()=>{ modal.classList.add('open'); modalOpen=true; });
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2000);
+}
+
+// ─────────────────────────────────────────────
+//  HELPERS
+// ─────────────────────────────────────────────
+function fe(x,y,rx,ry,rot=0){ cx.beginPath(); cx.ellipse(x,y,rx,ry,rot,0,Math.PI*2); cx.fill(); }
+function fc(x,y,r){ cx.beginPath(); cx.arc(x,y,r,0,Math.PI*2); cx.fill(); }
+function ft(x1,y1,x2,y2,x3,y3){ cx.beginPath(); cx.moveTo(x1,y1); cx.lineTo(x2,y2); cx.lineTo(x3,y3); cx.closePath(); cx.fill(); }
+function frr(x,y,w,h,r){ cx.beginPath(); cx.roundRect(x,y,w,h,r); cx.fill(); }
+
+function lerpAngle(a,b,t){
+  let d=b-a;
+  while(d>Math.PI)  d-=2*Math.PI;
+  while(d<-Math.PI) d+=2*Math.PI;
+  return a+d*t;
+}
+
+function vis(x,y,pad=120){
+  return x>camX-pad&&x<camX+W+pad&&y>camY-pad&&y<camY+H+pad;
+}
+
+// ─────────────────────────────────────────────
+//  DRAW: MINIMAP
+// ─────────────────────────────────────────────
+function drawMinimap(){
+  const MW=162, MH=Math.round(162*(WH/WW));
+  const MX=14, MY=66;
+  const sx=MW/WW, sy=MH/WH;
+
+  cx.save();
+
+  cx.fillStyle='rgba(8,16,12,0.82)';
+  cx.strokeStyle='rgba(255,255,255,0.18)';
+  cx.lineWidth=1;
+  cx.beginPath(); cx.roundRect(MX,MY,MW,MH,6); cx.fill(); cx.stroke();
+
+  cx.beginPath(); cx.roundRect(MX+1,MY+1,MW-2,MH-2,5); cx.clip();
+
+  cx.fillStyle='rgba(50,120,50,0.5)';
+  cx.fillRect(MX,MY,MW,MH);
+
+  cx.fillStyle='rgba(196,176,152,0.55)';
+  PATHS.forEach(p=>{
+    cx.fillRect(MX+p.x*sx, MY+p.y*sy, Math.max(1,p.w*sx), Math.max(1,p.h*sy));
+  });
+
+  cx.strokeStyle='rgba(255,255,255,0.22)';
+  cx.lineWidth=1;
+  cx.strokeRect(MX+camX*sx, MY+camY*sy, W*sx, H*sy);
+
+  HOUSES.forEach(h=>{
+    cx.fillStyle=h.acc;
+    cx.shadowColor=h.acc; cx.shadowBlur=4;
+    frr(MX+h.x*sx-3, MY+h.y*sy-3, 6,6, 1);
+    cx.shadowBlur=0;
+  });
+
+  TREATS.forEach(tr=>{
+    if(tr.collected) return;
+    const pulse=0.55+Math.sin(Date.now()*0.003+tr.x)*0.45;
+    cx.fillStyle=ORB_CFG[tr.card].col;
+    cx.globalAlpha=pulse;
+    fc(MX+tr.x*sx, MY+tr.y*sy, 2.5);
+    cx.globalAlpha=1;
+  });
+
+  const dp=0.7+Math.sin(Date.now()*0.004)*0.3;
+  cx.shadowColor='#E8893A'; cx.shadowBlur=7*dp;
+  cx.fillStyle='#E8893A';
+  fc(MX+dog.x*sx, MY+dog.y*sy, 3.5);
+  cx.shadowBlur=0;
+
+  cx.restore();
+
+  cx.fillStyle='rgba(255,255,255,0.35)';
+  cx.font='bold 7px "JetBrains Mono",monospace';
+  cx.textAlign='left'; cx.textBaseline='top';
+  cx.fillText('PARK MAP', MX+5, MY+MH-12);
+}
+
+// ─────────────────────────────────────────────
+//  DRAW: PARK FENCE
+// ─────────────────────────────────────────────
+function drawFence(){
+  const FH=22, PS=48, postC='#7A5C1E', railC='#B08835', GL=682, GR=758;
+
+  // helper: draw a horizontal fence section
+  function hFence(x1,x2,yBase,top){
+    const y0=top?yBase:yBase-FH;
+    // rails
+    cx.fillStyle=railC;
+    cx.fillRect(x1, y0+FH*0.3, x2-x1, 4);
+    cx.fillRect(x1, y0+FH*0.68, x2-x1, 4);
+    // posts
+    cx.fillStyle=postC;
+    for(let x=x1;x<=x2;x+=PS){
+      cx.fillRect(x-3.5, y0, 7, FH);
+    }
+  }
+  // helper: draw a vertical fence section
+  function vFence(y1,y2,xBase,left){
+    const x0=left?xBase:xBase-FH;
+    cx.fillStyle=railC;
+    cx.fillRect(x0+FH*0.3, y1, 4, y2-y1);
+    cx.fillRect(x0+FH*0.68, y1, 4, y2-y1);
+    cx.fillStyle=postC;
+    for(let y=y1;y<=y2;y+=PS){
+      cx.fillRect(x0, y-3.5, FH, 7);
+    }
+  }
+
+  // top fence (full width, gap at main vert path x=690-750)
+  hFence(0, GL, 0, true);
+  hFence(GR, WW, 0, true);
+
+  // bottom fence (gap = entry gate GL to GR)
+  hFence(0, GL, WH, false);
+  hFence(GR, WW, WH, false);
+
+  // left fence
+  vFence(0, WH, 0, true);
+
+  // right fence
+  vFence(0, WH, WW, false);
+
+  // ── ENTRY GATE (bottom center) ──────────────────
+  const GP_W=14, GP_H=50, gmx=(GL+GR)/2;
+  // pillar left
+  cx.fillStyle='#5A4010';
+  frr(GL-GP_W, WH-GP_H, GP_W, GP_H, [3,0,0,0]);
+  cx.fillStyle='#8B6520';
+  cx.fillRect(GL-GP_W, WH-GP_H, GP_W, 6);
+  // pillar right
+  cx.fillStyle='#5A4010';
+  frr(GR, WH-GP_H, GP_W, GP_H, [0,3,0,0]);
+  cx.fillStyle='#8B6520';
+  cx.fillRect(GR, WH-GP_H, GP_W, 6);
+  // finials (glowing orange balls on top)
+  cx.shadowColor='#E8893A'; cx.shadowBlur=10;
+  cx.fillStyle='#E8893A';
+  fc(GL-GP_W/2, WH-GP_H-7, 7);
+  fc(GR+GP_W/2, WH-GP_H-7, 7);
+  cx.shadowBlur=0;
+  // arch banner
+  cx.fillStyle='rgba(60,36,8,0.92)';
+  frr(gmx-62, WH-GP_H-30, 124, 24, 5);
+  cx.strokeStyle='#E8893A'; cx.lineWidth=1.5;
+  cx.beginPath(); cx.roundRect(gmx-62, WH-GP_H-30, 124, 24, 5); cx.stroke();
+  cx.fillStyle='#FFD700';
+  cx.font='bold 9px "Space Grotesk",sans-serif';
+  cx.textAlign='center'; cx.textBaseline='middle';
+  cx.fillText('CORGI INSURANCE PARK', gmx, WH-GP_H-18);
+
+  // ── TOP OPENING POSTS (main vert exits top) ──────
+  cx.shadowColor='#9C27B0'; cx.shadowBlur=8;
+  cx.fillStyle='#6C3483';
+  frr(GL-10, 0, 10, 30, [0,0,3,3]);
+  frr(GR, 0, 10, 30, [0,0,3,3]);
+  cx.shadowBlur=0;
+}
+
+// ─────────────────────────────────────────────
+//  DRAW: GRASS BACKGROUND
+// ─────────────────────────────────────────────
+function drawGrass(){
+  // base
+  cx.fillStyle='#4CAF50';
+  cx.fillRect(0,0,WW,WH);
+  // darker spots for texture (seeded)
+  cx.fillStyle='rgba(0,0,0,0.04)';
+  for(let i=0;i<300;i++){
+    const gx=(Math.abs(Math.sin(i*6.1+0.4))*WW)|0;
+    const gy=(Math.abs(Math.sin(i*3.7+1.8))*WH)|0;
+    const gr=(8+Math.abs(Math.sin(i*9.2))*22)|0;
+    fc(gx,gy,gr);
+  }
+  // lighter patches
+  cx.fillStyle='rgba(255,255,255,0.04)';
+  for(let i=0;i<200;i++){
+    const gx=(Math.abs(Math.sin(i*4.9+2.2))*WW)|0;
+    const gy=(Math.abs(Math.sin(i*8.3+0.6))*WH)|0;
+    const gr=(6+Math.abs(Math.sin(i*7.1))*18)|0;
+    fc(gx,gy,gr);
+  }
+  // world border dark
+  cx.strokeStyle='rgba(0,0,0,0.35)';
+  cx.lineWidth=20;
+  cx.strokeRect(0,0,WW,WH);
+}
+
+// ─────────────────────────────────────────────
+//  DRAW: PATHS
+// ─────────────────────────────────────────────
+function drawPaths(){
+  PATHS.forEach(p=>{
+    // base stone
+    cx.fillStyle='#C4B098'; cx.fillRect(p.x,p.y,p.w,p.h);
+    // tiles
+    const ts=56;
+    cx.fillStyle='#B8A48A';
+    for(let tx=Math.floor(p.x/ts)*ts; tx<p.x+p.w; tx+=ts){
+      cx.fillRect(Math.max(p.x,tx)+1, p.y+1, Math.min(ts-2,p.x+p.w-tx-2), p.h-2);
+      cx.fillRect(p.x+1, p.y+1, p.w-2, Math.min(ts-2,p.y+p.h-p.y-2));
+    }
+    // grid lines
+    cx.strokeStyle='#A89070'; cx.lineWidth=1;
+    for(let tx=p.x; tx<p.x+p.w; tx+=ts){
+      cx.beginPath(); cx.moveTo(tx,p.y); cx.lineTo(tx,p.y+p.h); cx.stroke();
+    }
+    cx.beginPath(); cx.moveTo(p.x,p.y); cx.lineTo(p.x+p.w,p.y); cx.stroke();
+    cx.beginPath(); cx.moveTo(p.x,p.y+p.h); cx.lineTo(p.x+p.w,p.y+p.h); cx.stroke();
+  });
+}
+
+// ─────────────────────────────────────────────
+//  DRAW: FOUNTAIN
+// ─────────────────────────────────────────────
+function drawFountain(fx,fy){
+  const t=Date.now()*0.001;
+  // base ring
+  cx.fillStyle='#8090A0'; fe(fx,fy,55,42);
+  cx.fillStyle='#6A7A8A'; fe(fx,fy,40,30);
+  // water
+  cx.fillStyle='#5BB8D8'; fe(fx,fy,36,27);
+  // animated ripples
+  [0.4,0.7,1.0].forEach((r,i)=>{
+    const pulse=(Math.sin(t*2+i*1.5)*0.12);
+    cx.strokeStyle=`rgba(160,220,255,${0.5-i*0.12})`;
+    cx.lineWidth=1.8;
+    cx.beginPath(); cx.ellipse(fx,fy,(36*r+pulse*8),(27*r+pulse*6),0,0,Math.PI*2); cx.stroke();
+  });
+  // center column
+  cx.fillStyle='#98A8B8'; fc(fx,fy,10);
+  cx.fillStyle='#B8C8D8'; fc(fx,fy,6);
+  // water sparkle
+  cx.fillStyle='rgba(255,255,255,0.6)';
+  fc(fx-8,fy-5,3); fc(fx+10,fy+4,2); fc(fx+2,fy-10,2.5);
+}
+
+// ─────────────────────────────────────────────
+//  DRAW: TREE (top-down)
+// ─────────────────────────────────────────────
+function drawTree(t){
+  const {x,y,s}=t;
+  // shadow
+  cx.fillStyle='rgba(0,0,0,0.13)'; fe(x+6,y+6,23*s,17*s);
+  // outer canopy
+  cx.fillStyle='#2E7D32'; fc(x,y,24*s);
+  // mid
+  cx.fillStyle='#388E3C'; fc(x-4*s,y-3*s,16*s);
+  // highlight
+  cx.fillStyle='rgba(255,255,255,0.12)'; fc(x-7*s,y-7*s,8*s);
+}
+
+// ─────────────────────────────────────────────
+//  DRAW: FLOWER
+// ─────────────────────────────────────────────
+function drawFlower(f){
+  cx.fillStyle='#2E7D32'; cx.fillRect(f.x-1,f.y-8,2,8);
+  cx.fillStyle=f.c; fc(f.x,f.y-8,4.5);
+  cx.fillStyle='#FFD700'; fc(f.x,f.y-8,2);
+}
+
+// ─────────────────────────────────────────────
+//  ORB CONFIG  (one per treat card)
+// ─────────────────────────────────────────────
+const ORB_CFG = [
+  {col:'#E8893A', icon:'👤', lbl:'ABOUT ME'},
+  {col:'#FFD700', icon:'📄', lbl:'RÉSUMÉ'},
+  {col:'#9C63FF', icon:'🎓', lbl:'EDUCATION'},
+  {col:'#00BCD4', icon:'⚡', lbl:'SKILLS'},
+  {col:'#2196F3', icon:'💼', lbl:'EXPERIENCE'},
+  {col:'#43A047', icon:'📊', lbl:'INTERNSHIP'},
+  {col:'#A1887F', icon:'🏢', lbl:'ANALYST'},
+  {col:'#F9A825', icon:'🏅', lbl:'CERTS'},
+];
+
+// ─────────────────────────────────────────────
+//  DRAW: ORB / CHECKPOINT
+// ─────────────────────────────────────────────
+function drawOrb(tr){
+  const cfg = ORB_CFG[tr.card];
+  const t = Date.now()*0.001;
+  const float = Math.sin(t*1.8 + tr.x*0.005)*7;
+  const pulse = 0.6 + Math.sin(t*2.5)*0.4;
+
+  const dist = Math.hypot(dog.x-tr.x, dog.y-tr.y);
+  const prox = Math.max(0, 1 - dist/110);
+  const R = 16 + prox*5;
+
+  const ox=tr.x, oy=tr.y+float;
+
+  cx.fillStyle='rgba(0,0,0,0.18)';
+  fe(tr.x, tr.y+12, (R-2)+pulse*3, 5);
+
+  for(let i=3;i>=1;i--){
+    cx.globalAlpha = (0.07 + prox*0.08) * i * pulse;
+    cx.fillStyle = cfg.col;
+    fc(ox, oy, R + i*11);
+  }
+  cx.globalAlpha=1;
+
+  cx.shadowColor=cfg.col;
+  cx.shadowBlur=(18+prox*22)*pulse;
+
+  const g=cx.createRadialGradient(ox-R*0.28,oy-R*0.28,R*0.05,ox,oy,R);
+  g.addColorStop(0,'rgba(255,255,255,0.55)');
+  g.addColorStop(0.35,cfg.col);
+  g.addColorStop(1,cfg.col+'99');
+  cx.fillStyle=g; fc(ox,oy,R);
+
+  cx.fillStyle='rgba(255,255,255,0.42)';
+  fe(ox-R*0.28, oy-R*0.3, R*0.38, R*0.26, -0.35);
+
+  cx.shadowBlur=0;
+
+  cx.font=`${11+prox*3}px serif`;
+  cx.textAlign='center'; cx.textBaseline='middle';
+  cx.fillText(cfg.icon, ox, oy+0.5);
+
+  const lw=cx.measureText(cfg.lbl).width+14;
+  cx.fillStyle='rgba(0,0,0,0.72)';
+  frr(ox-lw/2, oy+R+5, lw, 14, 7);
+  cx.fillStyle=cfg.col;
+  cx.font=`bold ${7+prox*1.5}px "Space Grotesk",sans-serif`;
+  cx.textAlign='center'; cx.textBaseline='middle';
+  cx.fillText(cfg.lbl, ox, oy+R+12);
+
+  for(let i=0;i<3;i++){
+    const a=t*1.3+i*Math.PI*2/3;
+    const sr=R+8+prox*4;
+    cx.fillStyle=`rgba(255,255,255,${0.6+pulse*0.3})`;
+    fc(ox+Math.cos(a)*sr, oy+Math.sin(a)*sr*0.6, 1.8+prox);
+  }
+}
+
+// ─────────────────────────────────────────────
+//  DRAW: BENCH (top-down)
+// ─────────────────────────────────────────────
+function drawBench(b){
+  cx.fillStyle='#8B6914';
+  frr(b.x-24,b.y-8,48,16,3);   // seat
+  cx.fillStyle='#6A5010';
+  cx.fillRect(b.x-22,b.y-12,8,4); cx.fillRect(b.x+14,b.y-12,8,4);
+  cx.fillRect(b.x-22,b.y+8,8,4);  cx.fillRect(b.x+14,b.y+8,8,4);
+}
+
+// ─────────────────────────────────────────────
+//  DRAW: LAMP POST (top-down)
+// ─────────────────────────────────────────────
+function drawLamp(l){
+  cx.fillStyle='rgba(255,232,100,0.18)'; fc(l.x,l.y,20);
+  cx.fillStyle='#888'; fc(l.x,l.y,4);
+  cx.fillStyle='#FFE87C'; fc(l.x,l.y,6);
+}
+
+// ─────────────────────────────────────────────
+//  DRAW: HOUSE (top-down)
+// ─────────────────────────────────────────────
+function drawHouse(h, isNear){
+  const {x,y,roof,wall,door,acc,label}=h;
+  const HW=96, HH=82;
+
+  // glow when near
+  if(isNear){
+    cx.shadowColor=acc; cx.shadowBlur=22;
+  }
+
+  // shadow
+  cx.shadowColor='rgba(0,0,0,0.0)'; cx.shadowBlur=0;
+  cx.fillStyle='rgba(0,0,0,0.15)';
+  frr(x-HW/2+6, y-HH/2+6, HW, HH, 8);
+
+  if(isNear){ cx.shadowColor=acc; cx.shadowBlur=22; }
+
+  // roof (main body)
+  cx.fillStyle=roof;
+  frr(x-HW/2, y-HH/2, HW, HH, 8);
+
+  // roof ridge line
+  cx.strokeStyle='rgba(255,255,255,0.2)'; cx.lineWidth=2;
+  cx.beginPath(); cx.moveTo(x,y-HH/2+8); cx.lineTo(x,y+HH/2-22); cx.stroke();
+
+  // front wall (south face)
+  cx.fillStyle=wall;
+  frr(x-HW/2, y+HH/2-22, HW, 22, [0,0,8,8]);
+
+  // door
+  cx.fillStyle=door;
+  frr(x-12, y+HH/2-20, 24, 20, [0,0,4,4]);
+  cx.fillStyle='#FFD700'; fc(x+7, y+HH/2-9, 2.5);
+
+  // windows on front wall
+  cx.fillStyle='rgba(180,220,240,0.85)';
+  frr(x-HW/2+8, y+HH/2-19, 16, 14, 2);
+  frr(x+HW/2-24, y+HH/2-19, 16, 14, 2);
+  // window dividers
+  cx.strokeStyle='rgba(100,70,40,0.5)'; cx.lineWidth=1;
+  [x-HW/2+16, x+HW/2-16].forEach(wx=>{
+    cx.beginPath(); cx.moveTo(wx,y+HH/2-19); cx.lineTo(wx,y+HH/2-5); cx.stroke();
+    cx.beginPath(); cx.moveTo(wx-8,y+HH/2-12); cx.lineTo(wx+8,y+HH/2-12); cx.stroke();
+  });
+
+  // chimney
+  cx.fillStyle=roof;
+  frr(x+14, y-HH/2-10, 14, 16, 2);
+  cx.fillStyle='rgba(0,0,0,0.25)';
+  frr(x+13, y-HH/2-10, 16, 5, 2);
+  // smoke
+  const st=Date.now()*0.0012;
+  cx.fillStyle='rgba(200,200,200,0.35)';
+  fc(x+21, y-HH/2-20+Math.sin(st*1.3)*3, 5);
+  fc(x+19, y-HH/2-32+Math.sin(st*0.9)*3, 4);
+
+  // name label
+  cx.shadowBlur=0;
+  cx.fillStyle='rgba(0,0,0,0.75)';
+  frr(x-50, y-HH/2-32, 100, 20, 5);
+  cx.fillStyle=acc;
+  cx.font='bold 9px "Space Grotesk",sans-serif';
+  cx.textAlign='center'; cx.textBaseline='middle';
+  cx.fillText(label.toUpperCase(), x, y-HH/2-22);
+
+  // gate path in front
+  cx.fillStyle='#D4C0A8';
+  cx.fillRect(x-6, y+HH/2, 12, 28);
+
+  cx.shadowBlur=0;
+}
+
+// ─────────────────────────────────────────────
+//  DRAW: CORGI (top-down, rotated to face direction)
+// ─────────────────────────────────────────────
+function drawCorgi(){
+  const {x,y,angle,walking,legPhase,wagT,near}=dog;
+  const t=Date.now();
+
+  cx.save();
+  cx.translate(x,y);
+  cx.rotate(angle); // 0=right, PI/2=down, PI=left, -PI/2=up
+
+  const lp=walking ? legPhase : 0;
+  const wagAmt = near!==null ? Math.sin(wagT*9)*0.55 : 0;
+
+  // back legs (behind body, at -x in rotated space)
+  cx.fillStyle='#B86530';
+  fe(-16, -11+Math.sin(lp)*5, 6,4, 0.3);
+  fe(-16,  11-Math.sin(lp)*5, 6,4,-0.3);
+
+  // body
+  cx.fillStyle='#D4884A'; fe(0,0,22,14);
+  // body shading
+  const bg=cx.createRadialGradient(-6,-5,2,0,0,22);
+  bg.addColorStop(0,'rgba(255,255,255,0.12)'); bg.addColorStop(1,'rgba(0,0,0,0.1)');
+  cx.fillStyle=bg; fe(0,0,22,14);
+
+  // belly marking
+  cx.fillStyle='#F0E4CC'; fe(3,0,15,9);
+
+  // tail (at back = -x direction in rotated space)
+  cx.save();
+  cx.translate(-22,0);
+  cx.rotate(wagAmt);
+  cx.fillStyle='#F2EBD8'; fe(0,0,10,6);
+  cx.fillStyle='rgba(210,195,170,0.5)'; fe(0,0,7,4);
+  cx.restore();
+
+  // front legs (in front of body, at +x)
+  cx.fillStyle='#C07040';
+  fe(16, -11-Math.sin(lp)*5, 6,4, 0.3);
+  fe(16,  11+Math.sin(lp)*5, 6,4,-0.3);
+
+  // head (+x = front)
+  cx.fillStyle='#E09050'; fc(26,0,16);
+  cx.fillStyle='rgba(255,255,255,0.12)'; fc(22,-5,8);
+
+  // snout
+  cx.fillStyle='#D07840'; fe(38,0,9,6.5);
+
+  // white blaze
+  cx.fillStyle='#F5EAD8'; fe(28,-1,6,8,0.2);
+
+  // ears
+  cx.fillStyle='#B86030';
+  ft(20,-17, 22,-28, 33,-18); // top ear
+  ft(20, 17, 22, 28, 33, 18); // bottom ear
+  cx.fillStyle='#E89868';
+  ft(21,-16, 22,-24, 31,-17);
+  ft(21, 16, 22, 24, 31, 17);
+
+  // eyes
+  cx.fillStyle='#0A0500'; fc(30,-8,4); fc(30,8,4);
+  cx.fillStyle='rgba(255,255,255,0.85)'; fc(31.5,-9.5,1.6); fc(31.5,6.5,1.6);
+
+  // nose
+  cx.fillStyle='#0A0500'; fe(45,0,4,3.5);
+  cx.fillStyle='rgba(255,255,255,0.3)'; fc(43.5,-1,1.5);
+
+  // smile
+  cx.strokeStyle='#6A2808'; cx.lineWidth=1.4;
+  cx.beginPath(); cx.arc(40,4,5,0.1,Math.PI*0.75); cx.stroke();
+
+  cx.restore();
+}
+
+// ─────────────────────────────────────────────
+//  DRAW: INTERACTION BUBBLE (screen space)
+// ─────────────────────────────────────────────
+function drawBubble(sx,sy,text,color){
+  const bounce=Math.sin(Date.now()*0.005)*5;
+  const bx=sx, by=sy-72+bounce;
+  const pad=10, tw=cx.measureText(text).width;
+  const bw=tw+pad*2+4, bh=26;
+
+  cx.fillStyle='rgba(255,255,255,0.96)';
+  cx.shadowColor='rgba(0,0,0,0.25)'; cx.shadowBlur=10;
+  frr(bx-bw/2, by-bh/2, bw, bh, 6);
+  cx.shadowBlur=0;
+
+  // tail
+  cx.fillStyle='rgba(255,255,255,0.96)';
+  cx.beginPath();
+  cx.moveTo(bx-7,by+bh/2); cx.lineTo(bx,by+bh/2+8); cx.lineTo(bx+7,by+bh/2);
+  cx.fill();
+
+  cx.fillStyle='#1A1A2E';
+  cx.font='bold 11px "Space Grotesk",sans-serif';
+  cx.textAlign='center'; cx.textBaseline='middle';
+  cx.fillText(text, bx, by+1);
+}
+
+// ─────────────────────────────────────────────
+//  DRAW: WELCOME SIGN
+// ─────────────────────────────────────────────
+function drawWelcomeSign(){
+  const sx=720, sy=350;
+  cx.fillStyle='#9A7030';
+  cx.fillRect(sx-4,sy,8,80);
+  cx.fillStyle='#C8A060';
+  frr(sx-88,sy-52,176,52,8);
+  cx.strokeStyle='#9A7030'; cx.lineWidth=3;
+  cx.strokeRect(sx-84,sy-48,168,44);
+  cx.fillStyle='#4A2800';
+  cx.font='bold 10px "Space Grotesk",sans-serif'; cx.textAlign='center'; cx.textBaseline='middle';
+  cx.fillText("✦ WELCOME TO ✦",sx,sy-33);
+  cx.font='bold 12px "Space Grotesk",sans-serif';
+  cx.fillText("JAINAM'S PORTFOLIO PARK",sx,sy-12);
+}
+
+// ─────────────────────────────────────────────
+//  UPDATE
+// ─────────────────────────────────────────────
+function update(dt){
+  if(modalOpen){
+    // consume any just-pressed so they don't fire on modal close
+    Object.keys(JP).forEach(k=>delete JP[k]);
+    mobileState.e=false;
+    return;
+  }
+
+  const up    = K['ArrowUp']    || K['KeyW'] || mobileState.u;
+  const down  = K['ArrowDown']  || K['KeyS'] || mobileState.d;
+  const left  = K['ArrowLeft']  || K['KeyA'] || mobileState.l;
+  const right = K['ArrowRight'] || K['KeyD'] || mobileState.r;
+  const enter = JP['Enter'] || JP['KeyE'] || JP['Space'] || mobileState.e;
+  mobileState.e=false;
+
+  let dx=0, dy=0;
+  if(left)  { dx=-1; dog.targetAngle=Math.PI; }
+  if(right) { dx= 1; dog.targetAngle=0; }
+  if(up)    { dy=-1; dog.targetAngle=-Math.PI/2; }
+  if(down)  { dy= 1; dog.targetAngle= Math.PI/2; }
+
+  // diagonal: prefer last pressed direction for facing
+  if(left&&up)    dog.targetAngle=-Math.PI*0.75;
+  if(right&&up)   dog.targetAngle=-Math.PI*0.25;
+  if(left&&down)  dog.targetAngle= Math.PI*0.75;
+  if(right&&down) dog.targetAngle= Math.PI*0.25;
+
+  if(dx&&dy){ dx*=0.707; dy*=0.707; }
+
+  dog.x = Math.max(30, Math.min(WW-30, dog.x + dx*dog.speed));
+  dog.y = Math.max(30, Math.min(WH-30, dog.y + dy*dog.speed));
+  dog.walking = (dx!==0||dy!==0);
+
+  if(dog.walking) dog.legPhase += dt*0.018;
+
+  // smooth rotation
+  dog.angle = lerpAngle(dog.angle, dog.targetAngle, 0.14);
+
+  // check near house
+  dog.near = null;
+  HOUSES.forEach((h,i)=>{
+    if(Math.hypot(dog.x-h.doorX, dog.y-h.doorY) < 68) dog.near=i;
+  });
+
+  if(dog.near!==null) dog.wagT+=dt*0.016;
+
+  // open project on enter
+  if(enter && dog.near!==null){
+    openModal(HOUSES[dog.near].proj);
+  }
+
+  // check treat collection (auto on proximity)
+  if(!modalOpen){
+    TREATS.forEach(tr=>{
+      if(!tr.collected && Math.hypot(dog.x-tr.x, dog.y-tr.y)<28){
+        tr.collected=true;
+        spawnParts(tr.x, tr.y);
+        showToast(`🦴  ${tr.label}!`);
+        const cardIdx=tr.card;
+        setTimeout(()=>showTreatCard(cardIdx), 350);
+      }
+    });
+  }
+
+  updateNPCDogs(dt);
+  updateParts(dt);
+
+  // consume just-pressed
+  Object.keys(JP).forEach(k=>delete JP[k]);
+
+  // smooth camera follow
+  const tcx=dog.x-W/2, tcy=dog.y-H/2;
+  camX += (Math.max(0,Math.min(WW-W,tcx))-camX)*0.10;
+  camY += (Math.max(0,Math.min(WH-H,tcy))-camY)*0.10;
+}
+
+// ─────────────────────────────────────────────
+//  RENDER
+// ─────────────────────────────────────────────
+function render(){
+  cx.clearRect(0,0,W,H);
+  cx.textBaseline='middle';
+  cx.textAlign='center';
+
+  // world transform
+  cx.save();
+  cx.translate(-camX,-camY);
+
+  drawGrass();
+  drawPaths();
+  drawFence();
+
+  // Draw order (back to front):
+  FLOWERS.forEach(f=>{ if(vis(f.x,f.y)) drawFlower(f); });
+  LAMPS.forEach(l=>{ if(vis(l.x,l.y)) drawLamp(l); });
+  BENCHES.forEach(b=>{ if(vis(b.x,b.y)) drawBench(b); });
+  drawFountain(720,460);
+  drawWelcomeSign();
+
+  // Trees behind everything
+  TREES.forEach(t=>{ if(vis(t.x,t.y)) drawTree(t); });
+
+  // Houses
+  HOUSES.forEach((h,i)=>{ if(vis(h.x,h.y)) drawHouse(h, i===dog.near); });
+
+  // Orbs / checkpoints — drawn on top of paths, below corgi
+  TREATS.forEach(tr=>{ if(!tr.collected && vis(tr.x,tr.y)) drawOrb(tr); });
+
+  // NPC dogs (behind player corgi)
+  NPC_DOGS.forEach(n=>{ if(vis(n.x,n.y)) drawNPCDog(n); });
+
+  // Corgi on top
+  drawCorgi();
+
+  // Particles (world space so they sit at collection point)
+  drawParts();
+
+  cx.restore();
+
+  // ── MINIMAP ──
+  drawMinimap();
+
+  // ── SCREEN SPACE ──
+  // Interaction bubble (follows corgi in screen space)
+  if(dog.near!==null){
+    const sx=dog.x-camX;
+    const sy=dog.y-camY;
+    const hName=PROJECTS[HOUSES[dog.near].proj].name;
+    const shortName = hName.length>22 ? hName.slice(0,20)+'…' : hName;
+    drawBubble(sx, sy, `E · ${shortName}`, HOUSES[dog.near].acc);
+  }
+}
+
+// ─────────────────────────────────────────────
+//  GAME LOOP
+// ─────────────────────────────────────────────
+let lastTs=0;
+function loop(ts){
+  const dt=Math.min(ts-lastTs,50); lastTs=ts;
+  update(dt); render();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
