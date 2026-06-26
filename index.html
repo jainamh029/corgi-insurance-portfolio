@@ -171,6 +171,7 @@ const HOUSES = [
   { x:1180, y:210, proj:1, roof:'#1A3A5C', wall:'#D4E6F1', door:'#2C5F8A', acc:'#2196F3', label:'San Francisco' },
   { x:260,  y:740, proj:2, roof:'#4A235A', wall:'#FEF9E7', door:'#6C3483', acc:'#9C27B0', label:'Chicago Office' },
   { x:1180, y:740, proj:3, roof:'#5D3A1A', wall:'#FFF8F0', door:'#3D2008', acc:'#E67E22', label:'Corgi Cafe' },
+  { x:720,  y:120, proj:-1, roof:'#E8893A', wall:'#FFF8F0', door:'#C86820', acc:'#FF6B00', label:'Why Hire Me?' },
 ];
 
 // Door trigger = house front, just below the house
@@ -563,6 +564,36 @@ function getTreatHTML(idx){
       <div class="cv-exp"><div class="cv-exp-role">MS, Quantitative Finance</div><div class="cv-exp-co">Northeastern University · May 2025</div></div>
     </div>
     <div class="mc-tags">${['Financial Modeling','Python','Excel VBA','Pandas','Investment Banking','Strategic Finance'].map(tag).join('')}</div>`;
+
+  case 8: return `${bar(AC)}
+    <div class="mc-icon">🎯</div>
+    <div class="mc-cat" style="color:${AC}">Corgi Insurance · Strategic Finance Fit</div>
+    <h2 class="mc-title">3 Reasons to Make the Call</h2>
+    <div class="mc-metrics">${m('0→1','Builder')}${m('3+','Yrs Exp.')}${m('Insurance','Analytics')}${m('Python+SQL','Automation')}</div>
+    <div class="cv-sec">
+      <div class="cv-sec-hd" style="color:${AC}">① The 0→1 Mindset You're Hiring For</div>
+      <p class="mc-desc" style="margin:4px 0 8px">Corgi is rebuilding insurance infrastructure from scratch. You need someone who builds, not maintains. Here's the proof:</p>
+      <div class="mc-tags">${['HealthRisk IQ — insurance M&A platform, built from zero','PE Deal Suite — full LBO toolkit, built from zero','MVPX Index — thematic backtesting engine, built from zero'].map(tag).join('')}</div>
+      <p style="color:#aaa;font-size:12px;margin:6px 0 0;font-style:italic">"Prefer building over maintaining" — written in your JD. Demonstrated in every project I own.</p>
+    </div>
+    <div class="cv-sec">
+      <div class="cv-sec-hd" style="color:${AC}">② Finance × Engineering = No Handoffs</div>
+      <p class="mc-desc" style="margin:4px 0 8px">Corgi automates what brokers, underwriters &amp; ops staff once handled manually. I don't just model — I build the pipeline that feeds the model.</p>
+      <div class="mc-tags">${['3-Statement · DCF · LBO Modeling','Python Automation · SQL Pipelines','Scenario Analysis · Variance Reporting','Bloomberg Terminal · FactSet'].map(tag).join('')}</div>
+    </div>
+    <div class="cv-sec">
+      <div class="cv-sec-hd" style="color:${AC}">③ Insurance Is Already My Language</div>
+      <p class="mc-desc" style="margin:4px 0 8px">HealthRisk IQ: built an M&amp;A analytics dashboard for Medicare Advantage — evaluating deal activity, strategic fit, and underwriting economics. Same financial logic that drives a full-stack carrier.</p>
+      <div class="mc-tags">${['Underwriting Economics','Insurance M&A Analytics','Risk-Adjusted Returns','Medicare Advantage'].map(tag).join('')}</div>
+    </div>
+    <div style="background:rgba(232,137,58,0.13);border:1px solid rgba(232,137,58,0.4);border-radius:8px;padding:12px 14px;margin-top:10px">
+      <div style="color:${AC};font-weight:700;font-size:11px;letter-spacing:0.08em;margin-bottom:5px">THE BOTTOM LINE</div>
+      <p style="color:#eee;font-size:13px;margin:0;line-height:1.65">Corgi is rebuilding insurance from the ground up. I built three financial tools from the ground up. At TechMentee I joined a 3-person team and owned the entire financial modeling function — no template, no playbook. That is 0→1. That is exactly what you are hiring for.</p>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+      <a class="mc-link" href="https://linkedin.com/in/s-jainam" target="_blank" style="background:#0A66C2;color:#fff">LinkedIn →</a>
+      <a class="mc-link" href="mailto:shah.jainamh@northeastern.edu" style="background:${AC};color:#0D1B2A">Email Jainam →</a>
+    </div>`;
 
   default: return '';
   }
@@ -1180,7 +1211,9 @@ function update(dt){
 
   // open project on enter
   if(enter && dog.near!==null){
-    openModal(HOUSES[dog.near].proj);
+    const nearH = HOUSES[dog.near];
+    if(nearH.proj < 0) showTreatCard(8);
+    else openModal(nearH.proj);
   }
 
   // check treat collection (auto on proximity)
