@@ -171,7 +171,7 @@ const HOUSES = [
   { x:1180, y:210, proj:1, roof:'#1A3A5C', wall:'#D4E6F1', door:'#2C5F8A', acc:'#2196F3', label:'San Francisco' },
   { x:260,  y:740, proj:2, roof:'#4A235A', wall:'#FEF9E7', door:'#6C3483', acc:'#9C27B0', label:'Chicago Office' },
   { x:1180, y:740, proj:3, roof:'#5D3A1A', wall:'#FFF8F0', door:'#3D2008', acc:'#E67E22', label:'Corgi Cafe' },
-  { x:720,  y:120, proj:-1, roof:'#E8893A', wall:'#FFF8F0', door:'#C86820', acc:'#FF6B00', label:'Why Hire Me?' },
+  { x:720,  y:200, proj:-1, roof:'#E8893A', wall:'#FFF8F0', door:'#C86820', acc:'#FF6B00', label:'Why Hire Me?' },
 ];
 
 // Door trigger = house front, just below the house
@@ -1292,9 +1292,10 @@ function render(){
   if(dog.near!==null){
     const sx=dog.x-camX;
     const sy=dog.y-camY;
-    const hName=PROJECTS[HOUSES[dog.near].proj].name;
-    const shortName = hName.length>22 ? hName.slice(0,20)+'…' : hName;
-    drawBubble(sx, sy, `E · ${shortName}`, HOUSES[dog.near].acc);
+    const nearH=HOUSES[dog.near];
+    const hName=nearH.proj<0 ? nearH.label : PROJECTS[nearH.proj].name;
+    const shortName=hName.length>22 ? hName.slice(0,20)+'…' : hName;
+    drawBubble(sx, sy, `E · ${shortName}`, nearH.acc);
   }
 }
 
